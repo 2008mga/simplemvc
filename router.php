@@ -8,10 +8,10 @@ $route->group('/api', function ($route) {
     $route->get('/by/month', "\Simple\Controllers\IndexController::byMonth");
     $route->get('/by/hour', '\Simple\Controllers\IndexController::byHour');
     $route->get('/by/day', '\Simple\Controllers\IndexController::byDay');
-    $route->post('/insert', '\Simple\Controllers\IndexController::insert');
+    $route->get('/insert', '\Simple\Controllers\IndexController::insert');
 });
 
-$route->get('/', 'PageController::index');
+$route->get('/', '\Simple\Controllers\PageController::index');
 /*
  * END PLACE ROUTES
  * */
