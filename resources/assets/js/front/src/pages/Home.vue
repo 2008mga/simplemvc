@@ -2,24 +2,30 @@
     <div id="home">
         <div class="container">
             <div class="row">
-                <div class="col-12 col-md-8 offset-md-2">
+                <div class="col-12 col-md-8 offset-md-2 mt-4">
                     <div class="row">
                         <div class="col-12 col-md-12 text-center">
                             <div class="d-flex justify-content-center">
-                                <datepicker
-                                        language="ru"
-                                        :format="customFormat"
-                                        v-model="date"
-                                        :placholder="date"
-                                        bootstrapStyling
-                                >
-                                </datepicker>
-                                <vue-timepicker
-                                        v-model="times"
-                                        v-if="by === 'hour'"
-                                        format="HH"
-                                        @change="Filter"
-                                ></vue-timepicker>
+                                <div>
+                                    <label for="">Дата</label>
+                                    <datepicker
+                                            language="ru"
+                                            :format="customFormat"
+                                            v-model="date"
+                                            :placholder="date"
+                                            @input="Filter"
+                                            bootstrapStyling
+                                    >
+                                    </datepicker>
+                                </div>
+                                <div v-if="by === 'hour'">
+                                    <label for="" class="d-block">Время</label>
+                                    <vue-timepicker
+                                            v-model="times"
+                                            format="HH"
+                                            @change="Filter"
+                                    ></vue-timepicker>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -123,11 +129,21 @@
     .by
         display: inline
         li
-            background-color: #dedede
+            background-color: #34495e
+            color: white
             padding: 5px 10px !important
             border-radius: 5px
             font-size: 12px
             cursor: pointer
         li.active
-            background-color: #aeaeae
+            background-color: lighten(#34495e, 10%)
+    .time-picker
+      input
+        background-color: #34495e
+        border-color: darken(#34495e, 10%) !important
+        color: white
+        padding: 6px 10px !important
+        height: auto !important
+      .clear-btn
+        display: none !important
 </style>
