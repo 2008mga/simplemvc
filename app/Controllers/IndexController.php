@@ -1,5 +1,7 @@
 <?php namespace Simple\Controllers;
 
+use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Simple\Models\Meta;
@@ -17,15 +19,35 @@ class IndexController {
     {
         $body = $request->getQueryParams();
 
-        $metas = Meta::between($body['start_date'], $body['end_date'])
-            ->groupBy('name')
-            ->selectRaw('strftime("%Y", created_at) as year, name, strftime("%Y", created_at) as label')
-            ->groupBy(['year'])
+        $queryDate = Carbon::parse($body['date']);
+
+        $startMonth = $queryDate->copy()->startOfYear();
+        $endMonth = $queryDate->copy()->endOfYear();
+
+        $daysCount = $endMonth->diffInMonths($startMonth) + 1;
+
+        $labels = Collection::make(range(1, $daysCount));
+
+        $datasets = Meta::query()
+            ->where('created_at', '>=', $startMonth->toDateTimeString())
+            ->selectRaw('strftime("%m", created_at) as month, name')
+            ->groupBy(['name', 'month'])
             ->selectRaw('avg(value) as data')
             ->get()
-            ->groupBy('name');
+            ->map(function (&$data) use ($labels, $endMonth) {
+                $data['label'] = $data->name;
+                $data['data'] = $data->prepareData($labels, 'month', $endMonth);
 
-        $response->getBody()->write(json_encode(self::data($metas)));
+                return $data;
+            })->toArray();
+
+        $response->getBody()->write(json_encode([
+            'startMonth' => $startMonth,
+            'endMonth' => $endMonth,
+            'daysCount' => $daysCount,
+            'labels' => $labels,
+            'datasets' => $datasets
+        ]));
 
         return $response;
     }
@@ -34,15 +56,36 @@ class IndexController {
     {
         $body = $request->getQueryParams();
 
-        $metas = Meta::between($body['start_date'], $body['end_date'])
-            ->groupBy('name')
-            ->selectRaw('strftime("%Y", created_at) as year, name, strftime("%Y-%m", created_at) as label')
-            ->groupBy(['year', 'label'])
+        $queryDate = Carbon::parse($body['date']);
+
+        $startDay = $queryDate->copy()->startOfMonth();
+        $endDay = $queryDate->copy()->endOfMonth();
+
+        $daysCount = $endDay->diffInDays($startDay) + 1;
+
+        $labels = Collection::make(range(1, $daysCount));
+
+        $datasets = Meta::query()
+            ->where('created_at', '>=', $startDay->toDateTimeString())
+            ->where('created_at', '<=', $endDay->toDateTimeString())
+            ->selectRaw('strftime("%d", created_at) as day, name')
+            ->groupBy(['name', 'day'])
             ->selectRaw('avg(value) as data')
             ->get()
-            ->groupBy('name');
+            ->map(function (&$data) use ($labels, $endDay) {
+                $data['label'] = $data->name;
+                $data['data'] = $data->prepareData($labels, 'day', $endDay);
 
-        $response->getBody()->write(json_encode(self::data($metas)));
+                return $data;
+            })->toArray();
+
+        $response->getBody()->write(json_encode([
+            'startMonth' => $startDay,
+            'endMonth' => $endDay,
+            'daysCount' => $daysCount,
+            'labels' => $labels,
+            'datasets' => $datasets
+        ]));
 
         return $response;
     }
@@ -51,15 +94,36 @@ class IndexController {
     {
         $body = $request->getQueryParams();
 
-        $metas = Meta::between($body['start_date'], $body['end_date'])
-            ->groupBy('name')
-            ->selectRaw('strftime("%H", created_at) as hour, name, strftime("%Y-%m-%d %H:00:00", created_at) as label')
-            ->groupBy(['label', 'hour'])
+        $queryDate = Carbon::parse($body['date']);
+
+        $startMinute = $queryDate->copy()->minute(0)->second(0);
+        $endMinute = $queryDate->copy()->minute(59)->second(59);
+
+        $daysCount = $endMinute->diffInMinutes($startMinute) + 1;
+
+        $labels = Collection::make(range(1, $daysCount));
+
+        $datasets = Meta::query()
+            ->where('created_at', '>=', $startMinute->toDateTimeString())
+            ->where('created_at', '<=', $startMinute->copy()->minute(59)->toDateTimeString())
+            ->selectRaw('strftime("%M", created_at) as minute, name')
+            ->groupBy(['name'])
             ->selectRaw('avg(value) as data')
             ->get()
-            ->groupBy('name');
+            ->map(function (&$data) use ($labels, $endMinute) {
+                $data['label'] = $data->name;
+                $data['data'] = $data->prepareData($labels, 'hour', $endMinute);
 
-        $response->getBody()->write(json_encode(self::data($metas)));
+                return $data;
+            })->toArray();
+
+        $response->getBody()->write(json_encode([
+            'startMonth' => $startMinute,
+            'endMonth' => $endMinute,
+            'daysCount' => $daysCount,
+            'labels' => $labels,
+            'datasets' => $datasets
+        ]));
 
         return $response;
     }
@@ -87,19 +151,37 @@ class IndexController {
     {
         $body = $request->getQueryParams();
 
-        $metas = Meta::between($body['start_date'], $body['end_date'])
-            ->groupBy('name')
-            ->selectRaw('strftime("%d", created_at) as day, name, strftime("%Y-%m-%d", created_at) as label')
-            ->groupBy(['label', 'day'])
+        $queryDate = Carbon::parse($body['date']);
+
+
+        $startHour = $queryDate->copy()->hour(0)->minute(0)->second(0);
+        $endHour = $queryDate->copy()->hour(23)->minute(59)->second(59);
+
+        $daysCount = $endHour->diffInHours($startHour) + 1;
+
+        $labels = Collection::make(range(1, $daysCount));
+
+        $datasets = Meta::query()
+            ->where('created_at', '>=', $startHour->toDateTimeString())
+            ->where('created_at', '<=', $endHour->toDateTimeString())
+            ->selectRaw('strftime("%H", created_at) as hour, name')
+            ->groupBy(['name'])
             ->selectRaw('avg(value) as data')
             ->get()
-            ->groupBy('name');
+            ->map(function (&$data) use ($labels, $endHour) {
+                $data['label'] = $data->name;
+                $data['data'] = $data->prepareData($labels, 'hour', $endHour);
 
+                return $data;
+            })->toArray();
 
-
-
-//        $response->getBody()->write(json_encode(self::data($metas)));
-        $response->getBody()->write(json_encode(Meta::all()));
+        $response->getBody()->write(json_encode([
+            'startMonth' => $startHour,
+            'endMonth' => $endHour,
+            'daysCount' => $daysCount,
+            'labels' => $labels,
+            'datasets' => $datasets
+        ]));
 
         return $response;
     }

@@ -4,53 +4,51 @@
             <div class="row">
                 <div class="col-12 col-md-8 offset-md-2">
                     <div class="row">
-                        <div class="col-12 col-md-6">
-                            <datepicker
-                                    language="ru"
-                                    :format="customFormat"
-                                    v-model="startDatetime"
-                                    placeholder="Начальная дата"
-                                    bootstrapStyling
-                            >
-                            </datepicker>
-                        </div>
-                        <div class="col-12 col-md-6">
-                            <datepicker
-                                    language="ru"
-                                    :format="customFormat"
-                                    v-model="endDatetime"
-                                    placeholder="Конечная дата"
-                                    bootstrapStyling
-                            >
-                            </datepicker>
+                        <div class="col-12 col-md-12 text-center">
+                            <div class="d-flex justify-content-center">
+                                <datepicker
+                                        language="ru"
+                                        :format="customFormat"
+                                        v-model="date"
+                                        :placholder="date"
+                                        bootstrapStyling
+                                >
+                                </datepicker>
+                                <vue-timepicker
+                                        v-model="times"
+                                        v-if="by === 'hour'"
+                                        format="HH"
+                                        @change="Filter"
+                                ></vue-timepicker>
+                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-12 col-md-12">
                     <div class="text-center my-3">
                         <ul class="list-inline by">
-                            <li @click="by = 'hour'"
+                            <li @click="by = 'hour'; Filter()"
                                 :class="{
                                     'list-inline-item': true,
                                     'active': by === 'hour'
                                 }">
                                 Час
                             </li>
-                            <li @click="by = 'day'"
+                            <li @click="by = 'day'; Filter()"
                                 :class="{
                                     'list-inline-item': true,
                                     'active': by === 'day'
                                 }">
                                 День
                             </li>
-                            <li @click="by = 'month'"
+                            <li @click="by = 'month'; Filter()"
                                 :class="{
                                     'list-inline-item': true,
                                     'active': by === 'month'
                                 }">
                                 Месяц
                             </li>
-                            <li @click="by = 'year'"
+                            <li @click="by = 'year'; Filter()"
                                 :class="{
                                     'list-inline-item': true,
                                     'active': by === 'year'
@@ -59,27 +57,15 @@
                             </li>
                         </ul>
                     </div>
-
-                    <p v-if="startDatetime && endDatetime" class="text-center">
-                        Выбранно за период
-                        <br />
-                        {{ customFormat(startDatetime) }} - {{ customFormat(endDatetime) }}
-                    </p>
-
-                    <button
-                            class="btn btn-primary mx-auto d-block btn-sm"
-                            @click="Filter"
-                    >Фильтровать</button>
                 </div>
             </div>
 
             <hr>
 
             <line-example
-                    width="500px"
-                    height="200vh"
                     :labels="labels"
                     :datasets="datasets"
+                    :height="200"
             ></line-example>
         </div>
     </div>
@@ -90,21 +76,25 @@
   import moment from 'moment';
   import api from '@/api';
   import LineExample from '@/components/LineChart.js'
+  import VueTimepicker from 'vue2-timepicker'
 
   export default {
     name: 'home',
     data() {
       return {
-        endDatetime: null,
-        startDatetime: null,
+        date: this.customFormat(moment.now()),
         by: 'year',
         labels: null,
-        datasets: []
+        datasets: [],
+        times: {
+          'HH': '00'
+        }
       }
     },
     components: {
       Datepicker,
-      LineExample
+      LineExample,
+      VueTimepicker
     },
     methods: {
       customFormat(date) {
@@ -113,30 +103,18 @@
       Filter() {
         api.get('/by/' + this.by, {
           params: {
-            'start_date': this.customFormat(this.startDatetime),
-            'end_date': this.customFormat(this.endDatetime)
+            'date': this.customFormat(this.date) + ' ' + this.times.HH + ':00:00'
           }
         })
           .then((req) => {
-            this.datasets = [];
-            this.labels = req.data[0]['labels'];
+            this.datasets = req.data.datasets;
+            this.labels = req.data['labels'];
 
-
-            req.data.forEach((meta, index) => {
-              this.datasets.push({
-                'label': meta.label,
-                'data': meta.data
-              });
-              console.log(meta, index);
-            });
-//            for (let meta, data in req.data) {
-
-//            }
           });
       }
     },
     mounted() {
-
+        this.Filter();
     }
   }
 </script>

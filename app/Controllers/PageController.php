@@ -7,6 +7,8 @@ class PageController
 {
     public static function index (Request $request, Response $response)
     {
+        $response->getBody()->write(include('../../dist/index.html'));
 
+        return $response;
     }
 }
