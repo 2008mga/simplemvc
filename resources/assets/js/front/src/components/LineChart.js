@@ -1,5 +1,6 @@
 // CommitChart.js
 import { Line } from 'vue-chartjs'
+import randomColor from 'randomcolor';
 
 export default {
   extends: Line,
@@ -21,14 +22,7 @@ export default {
     }
   },
   methods: {
-    getRandomColor() {
-      let letters = '0123456789ABCDEF';
-      let color = '#';
-      for (let i = 0; i < 6; i++) {
-        color += letters[Math.floor(Math.random() * 16)];
-      }
-      return color;
-    },
+    randomColor,
     Init() {
 
 
@@ -37,7 +31,21 @@ export default {
 
         this.gradient = this.$refs.canvas.getContext('2d').createLinearGradient(0, 0, 0, 450);
 
-        this.gradient.addColorStop(1, this.getRandomColor());
+        this.gradient.addColorStop(1, this.randomColor({
+          luminosity: 'light',
+          format: 'rgba',
+          alpha: 0 // e.g. 'rgba(9, 1, 107, 0.5)',
+        }));
+        this.gradient.addColorStop(0.5, this.randomColor({
+          luminosity: 'light',
+          format: 'rgba',
+          alpha: 0.5 // e.g. 'rgba(9, 1, 107, 0.5)',
+        }));
+        this.gradient.addColorStop(0, randomColor({
+          luminosity: 'light',
+          format: 'rgba',
+          alpha: 1 // e.g. 'rgba(9, 1, 107, 0.5)',
+        }));
 
         set = Object.assign(set, {
           backgroundColor: this.gradient
