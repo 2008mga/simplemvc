@@ -1,0 +1,6 @@
+{
+  "config": {
+    "driver": "sqlite",
+    "database": "/srv/hosts/simplemvc.local/db.sqlite"
+  }
+}
